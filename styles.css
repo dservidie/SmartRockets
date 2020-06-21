@@ -1,0 +1,21 @@
+body {
+  color: white;  
+  font-family: "Lucida Console", Monaco, monospace;
+}
+
+#container {
+  width: 100%;
+  background: #111;
+}
+
+#canvasDiv {
+  width: 620px;
+  float: left;
+}
+
+#outDiv {
+  margin-left: 620px;
+  background: #111;
+  padding: 10px;
+  height: 100%;
+}
