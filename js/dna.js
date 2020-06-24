@@ -1,4 +1,3 @@
-
 class DNA {
 	constructor(genes){
 		// Recieves genes and create a dna object
@@ -7,38 +6,43 @@ class DNA {
 		} else {
 			// If no genes just create random dna
 			this.genes = [];
-			for (var i = 0; i < (config.commandsAmount * config.commandDuration); i++) {
-				// Gives random vectors
-				this.genes[i] = { thrust: random(0.5, 1), steering: random(-1, 1) };
+			for (var i = 0; i < config.commandsAmount; i++) {
+				// Gives random commands
+				this.genes[i] = Rocket.createCommand(random(0.5, 1), random(-1, 1), random(config.commandDurationMin, config.commandDurationMax)); // Thrust, Steering, Duration
 			}
 		}
-	}
-	// Performs a crossover with another member of the species
-	crossover(partner) {
-		var newgenes = [];
-		// Picks random midpoint
-		var mid = floor(random(this.genes.length));
-		for (var i = 0; i < this.genes.length; i++) {
-			// If i is greater than mid the new gene should come from this partner
-			if (i > mid) {
-				newgenes[i] = this.genes[i];
-			}
-			// If i < mid new gene should come from other partners gene's
-			else {
-				newgenes[i] = partner.genes[i];
-			}
-		}
-		// Gives DNA object an array
-		return new DNA(newgenes);
 	}
 
 	// Adds random mutation to the genes to add variance.
-	mutation () {
-		for (var i = 0; i < this.genes.length; i++) {
-			// if random number less than 0.01, new gene is then random vector
-			if (random(1) < config.mutationRate) {
-				this.genes[i] = { thrust: random(0.5, 1), steering: random(-1, 1) };
+	mutation(mutationRate) {
+		if(mutationRate < 0.01) mutationRate = 0.01;
+		for(var g of this.genes) {
+			// if random number less than mutationRate, gene mutates
+			if (random(1) < mutationRate) {
+				// config.mutationDeviation 
+				g.thrust = this.limit( g.thrust + this.randomSign(random(0.1, config.mutationDeviation)) , 0.5, 1);
+				g.steering = this.limit( g.steering + this.randomSign(random(0.1, config.mutationDeviation)) , -1, 1);
+				g.duration = this.limit( g.duration + this.randomSign( config.commandDurationMin * random(0.1, config.mutationDeviation)) , config.commandDurationMin, config.commandDurationMax);
 			}
 		}
 	}
+	
+	// Adds random mutation to the genes to add variance.
+	clone() {
+		let clonedGenes = [];
+		for(var g of this.genes) {
+			clonedGenes.push( Rocket.createCommand(g.thrust, g.steering, g.duration) ); // Thrust, Steering, Duration
+		}
+		return new DNA(clonedGenes);
+	}
+	
+	randomSign(value){
+		return Math.random() < 0.5 ? value * -1 : value;
+	}
+	
+	limit(value, min, max){
+		return (value < min ? min : 
+						(value > max ? max : value)
+					 );
+	}	
 }

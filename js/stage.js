@@ -1,11 +1,16 @@
 class Stage {
-  constructor() {
-    this.objects = [];
+	static target;
+	static objects;
+	
+	static initialize(){
+		Stage.target = createVector(width / 2, 50);
+		Stage.objects = [];
+	}
+	
+  static addBarrier(barrier) {
+    Stage.objects.push(barrier);
   }
-  addBarrier(barrier) {
-    this.objects.push(barrier);
-  }
-  rocketCollision(rocket) {
+  static rocketCollision(rocket) {
     // Rocket hits border of canvas
     if (
       rocket.pos.x > width ||
@@ -27,12 +32,14 @@ class Stage {
 		return false;
   }
 
-  draw() {
+  static draw() {
     for (let obj of this.objects) {
       fill(255);
-      rect(obj.rx, obj.ry, obj.rw, obj.rh);
-    }
-  }
+			rect(obj.rx, obj.ry, obj.rw, obj.rh);
+		}
+		// Renders target
+		ellipse(Stage.target.x, Stage.target.y, 16, 16);
+	}
 
   // draw an arrow for a vector at a given base position
   static drawArrow(vector, location, color, scale = 5) {
@@ -48,13 +55,5 @@ class Stage {
     triangle(0, arrowSize / 2, 0, -arrowSize / 2, arrowSize, 0);
     pop();
   }
-  
-  static stop(milliseconds = 500) {
-    const date = Date.now();
-    let currentDate = null;
-    do {
-      currentDate = Date.now();
-    } while (currentDate - date < milliseconds);
-  }
-  
+
 }

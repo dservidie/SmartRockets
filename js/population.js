@@ -3,77 +3,136 @@ class Population {
 	static successCounter = 0;
 	static failedCounter = 0;	
 	
-	constructor() {
+	static rockets = [];
+  static popsize;
+  static matingpool = [];
+
+	static initialize() {
 		// Array of rockets
-		this.rockets = [];
+		Population.rockets = [];
 		// Amount of rockets
-    this.popsize = config.popSize;
+    Population.popsize = config.popSize;
     // Amount parent rocket partners
-    this.matingpool = [];
+    Population.matingpool = [];
 
     // Associates a rocket to an array index
-    for (var i = 0; i < this.popsize; i++) {
-      this.rockets[i] = new Rocket();
+    for (var i = 0; i < Population.popsize; i++) {
+      Population.rockets[i] = new Rocket();
     }
   }
 
-  evaluate() {
-    var maxfit = 0;
-    // Iterate through all rockets and calcultes their fitness
-    for (var i = 0; i < this.rockets.length; i++) {
-      // Calculates fitness
-      this.rockets[i].calcFitness();
-      // If current fitness is greater than max, then make max equal to current
-      if (this.rockets[i].fitness > maxfit) {
-        maxfit = this.rockets[i].fitness;
-      }
-    }
-    // Normalises fitnesses
-    for (var i = 0; i < this.rockets.length; i++) {
-      this.rockets[i].fitness /= maxfit;
-    }
+  static evaluate() {
+		// Calculates the performance of the generation to normalize the fitness.
+		let maxFuelUsed = 0;
+		let minFuelUsed = Number.MAX_VALUE;
+		let maxDistanceTraveled = 0;
+		let minDistanceTraveled = Number.MAX_VALUE;
+		let maxClosestTargetDistance = 0;		
+		let minClosestTargetDistance = Number.MAX_VALUE;		
+		let maxFinalTargetDistance = 0;		
+		let minFinalTargetDistance = Number.MAX_VALUE;		
 
-    this.matingpool = [];
-    // Take rockets fitness make in to scale of 1 to 100
+		for(var r of Population.rockets) {
+			if(r.fuelUsed > maxFuelUsed) maxFuelUsed = r.fuelUsed;
+			if(r.fuelUsed < minFuelUsed) minFuelUsed = r.fuelUsed;
+			if(r.distanceTraveled > maxDistanceTraveled) maxDistanceTraveled = r.distanceTraveled;
+			if(r.distanceTraveled < minDistanceTraveled) minDistanceTraveled = r.distanceTraveled;
+			if(r.closestTargetDistance > maxClosestTargetDistance) maxClosestTargetDistance = r.closestTargetDistance;
+			if(r.closestTargetDistance < minClosestTargetDistance) minClosestTargetDistance = r.closestTargetDistance;			
+			if(r.finalTargetDistance > maxClosestTargetDistance) maxFinalTargetDistance = r.finalTargetDistance;
+			if(r.finalTargetDistance < minClosestTargetDistance) minFinalTargetDistance = r.finalTargetDistance;			
+		}
+		// TMP fix
+		maxFuelUsed += 0.0000000001;
+		maxDistanceTraveled += 0.0000000001;
+		maxClosestTargetDistance += 0.0000000001;
+		maxFinalTargetDistance += 0.0000000001;
+		
+	//	if(config.debugMode){
+			console.log("#######################################");
+			console.log("###                                 ###");
+			console.log("fuelUsed: ", minFuelUsed , ' / ' , maxFuelUsed );		
+			console.log("distanceTraveled: ", minDistanceTraveled , ' / ' , maxDistanceTraveled );		
+			console.log("closestTargetDistance: ", minClosestTargetDistance , ' / ' , maxClosestTargetDistance );		
+			console.log("finalTargetDistance: ", minFinalTargetDistance , ' / ' , maxFinalTargetDistance );		
+			console.log("#######################################");
+	//	}
+		// Calculates fitness
+    for(var r of Population.rockets) {
+			let fuelUsedScore = map(r.fuelUsed, minFuelUsed, maxFuelUsed, 0, 1) * config.score_FuelUsed;
+			let distanceTraveledScore = map(r.distanceTraveled, minDistanceTraveled, maxDistanceTraveled, 0, 1) * config.score_DistanceTraveled;
+			let closestTargetDistanceScore = map(r.closestTargetDistance, minClosestTargetDistance, maxClosestTargetDistance, 1, 0) * config.score_ClosestTargetDistance;
+			let finalTargetDistanceScore = map(r.finalTargetDistance, minFinalTargetDistance, maxFinalTargetDistance, 1, 0) * config.score_FinalTargetDistance;
+
+			r.fitness = fuelUsedScore + distanceTraveledScore + closestTargetDistanceScore + finalTargetDistanceScore;
+
+			//if(config.debugMode){
+				console.log("#######################################");
+				console.log("fuelUsedScore:", fuelUsedScore , ' / r.fuelUsed: ' , r.fuelUsed );
+				console.log("distanceTraveledScore:", distanceTraveledScore , ' / r.distanceTraveled: ' , r.distanceTraveled);
+				console.log("closestTargetDistanceScore:", closestTargetDistanceScore , ' / r.closestTargetDistance: ' , r.closestTargetDistance);
+				console.log("finalTargetDistanceScore:", finalTargetDistanceScore , ' / r.finalTargetDistance: ' , r.finalTargetDistance);
+				console.log("# FITNESS: ", r.fitness );
+		//	}
+		}
+		
+		// Normalizing the fitness value.
+		const maxFitness = Population.rockets.reduce((p, c) => (p.fitness > c.fitness) ? p.fitness : c.fitness)
+		console.log(maxFitness);
+		Population.rockets.forEach(r => r.fitness /= maxFitness);
+		
+    Population.matingpool = [];
+    // Take rockets fitness make in to scale of 10 to 100
     // A rocket with high fitness will highly likely will be in the mating pool
-    for (var i = 0; i < this.rockets.length; i++) {
-      var n = this.rockets[i].fitness * 100;
+		let maxChances = 200;
+		let minChances = 10;
+		let ch = "";
+		let f = "";
+    for(var r of Population.rockets) {
+      var n =  map(r.fitness, 0, 1, minChances, maxChances);
+			f += r.fitness + ', ';
+  		ch += n + ', ';
       for (var j = 0; j < n; j++) {
-        this.matingpool.push(this.rockets[i]);
+        Population.matingpool.push(r);
       }
 		}
+		console.log("Fitness: ", f);
+		console.log("Chances: ", ch);
+		console.log("Population.matingpool.length: ", Population.matingpool.length);
 		Population.successCounter = 0;
 		Population.failedCounter = 0;
 	}
+	
   // Selects appropriate genes for child
-  selection() {
-    var newRockets = [];
-    for (var i = 0; i < this.rockets.length; i++) {
-      // Picks random dna
-      var parentA = random(this.matingpool).dna;
-      var parentB = random(this.matingpool).dna;
-      // Creates child by using crossover function
-      var child = parentA.crossover(parentB);
-      child.mutation();
-      // Creates new rocket with child dna
-      newRockets[i] = new Rocket(child);
-    }
+  static selection() {
+    let newRockets = [];
+		Rocket.launchSecuenceCounter = 0; // Just for graphical look.
+		for (var i = 0; i < Population.popsize; i++) {
+			var baseRocket = random(Population.matingpool);
+			var childGenome = baseRocket.dna.clone();
+			childGenome.mutation(config.mutationRate); // * (1-(baseRocket.fitness))
+			// Creates new rocket with child dna
+			newRockets.push(new Rocket(childGenome));
+		}
+
     // This instance of rockets are the new rockets
-    this.rockets = newRockets;
+    Population.rockets = newRockets;
   }
 
-  // Calls for update and show functions
-  run() {
-    for (var i = 0; i < this.popsize; i++) {
-      this.rockets[i].update();
-      // Displays rockets to screen
-      this.rockets[i].draw();
-    }
-  }
+	// Calls for update and show functions
+	static run() {
+		for(var r of Population.rockets) {
+			if(FPS/5 > r.launchSecuence){
+				r.update();
+				// Displays rockets to screen
+				r.draw();			
+			}
+		}
+	}
 
   // Checks if all misiles are crashed
-  simulationFinished() {
-    for (let r of this.rockets) {
+  static simulationFinished() {
+    for (let r of Population.rockets) {
       if (r.flying) {
         return false;
       }
