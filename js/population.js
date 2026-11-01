@@ -48,7 +48,7 @@ class Population {
 		maxClosestTargetDistance += 0.0000000001;
 		maxFinalTargetDistance += 0.0000000001;
 		
-	//	if(config.debugMode){
+		if(config.debugMode){
 			console.log("#######################################");
 			console.log("###                                 ###");
 			console.log("fuelUsed: ", minFuelUsed , ' / ' , maxFuelUsed );		
@@ -56,7 +56,7 @@ class Population {
 			console.log("closestTargetDistance: ", minClosestTargetDistance , ' / ' , maxClosestTargetDistance );		
 			console.log("finalTargetDistance: ", minFinalTargetDistance , ' / ' , maxFinalTargetDistance );		
 			console.log("#######################################");
-	//	}
+		}
 		// Calculates fitness
     for(var r of Population.rockets) {
 			let fuelUsedScore = map(r.fuelUsed, minFuelUsed, maxFuelUsed, 0, 1) * config.score_FuelUsed;
@@ -66,19 +66,19 @@ class Population {
 
 			r.fitness = fuelUsedScore + distanceTraveledScore + closestTargetDistanceScore + finalTargetDistanceScore;
 
-			//if(config.debugMode){
+			if(config.debugMode){
 				console.log("#######################################");
 				console.log("fuelUsedScore:", fuelUsedScore , ' / r.fuelUsed: ' , r.fuelUsed );
 				console.log("distanceTraveledScore:", distanceTraveledScore , ' / r.distanceTraveled: ' , r.distanceTraveled);
 				console.log("closestTargetDistanceScore:", closestTargetDistanceScore , ' / r.closestTargetDistance: ' , r.closestTargetDistance);
 				console.log("finalTargetDistanceScore:", finalTargetDistanceScore , ' / r.finalTargetDistance: ' , r.finalTargetDistance);
 				console.log("# FITNESS: ", r.fitness );
-		//	}
+			}
 		}
 		
 		// Normalizing the fitness value.
 		const maxFitness = Population.rockets.reduce((p, c) => (p.fitness > c.fitness) ? p.fitness : c.fitness)
-		console.log(maxFitness);
+		if(config.debugMode) console.log(maxFitness);
 		Population.rockets.forEach(r => r.fitness /= maxFitness);
 		
     Population.matingpool = [];
@@ -96,9 +96,11 @@ class Population {
         Population.matingpool.push(r);
       }
 		}
-		console.log("Fitness: ", f);
-		console.log("Chances: ", ch);
-		console.log("Population.matingpool.length: ", Population.matingpool.length);
+		if(config.debugMode){
+			console.log("Fitness: ", f);
+			console.log("Chances: ", ch);
+			console.log("Population.matingpool.length: ", Population.matingpool.length);
+		}
 		Population.successCounter = 0;
 		Population.failedCounter = 0;
 	}

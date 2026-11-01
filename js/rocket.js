@@ -5,7 +5,8 @@ class Rocket {
     let dna = args[0];
     // Physics of rocket at current instance
     this.tiltAcc = 0; // Rotation aceleration
-		this.rotation = p5.Vector.fromAngle(-HALF_PI, 0);
+		// p5 1.x treats the optional second argument as length; omit it so this stays a unit vector.
+		this.rotation = p5.Vector.fromAngle(-HALF_PI);
     this.pos = createVector(width / 2, height - 15);
     this.vel = createVector(0,0);
     this.acc = createVector(0,0);
@@ -85,11 +86,13 @@ class Rocket {
       this.vel.add(this.acc);
 			
 			// Calculates and applies the drag force according to the traveling angle of the rocket
-			let dragForce = this.vel.copy().normalize().mult(-1);
-			let angle = abs(this.vel.angleBetween(this.rotation)); // calculates the angle between velocity and fuselage
-			let dragCoefficient = map(angle, 0, 90, config.rocketDragMin, config.rocketDragMax);
-			dragForce.setMag(dragCoefficient * this.vel.magSq());
-			this.vel.add(dragForce);
+			if (this.vel.magSq() > 0) {
+				let dragForce = this.vel.copy().normalize().mult(-1);
+				let angle = abs(this.vel.angleBetween(this.rotation)); // calculates the angle between velocity and fuselage
+				let dragCoefficient = map(angle, 0, 90, config.rocketDragMin, config.rocketDragMax);
+				dragForce.setMag(dragCoefficient * this.vel.magSq());
+				this.vel.add(dragForce);
+			}
 			// Set the position accordingly to the velocity
       this.vel.limit(3);
       this.pos.add(this.vel);
@@ -105,7 +108,7 @@ class Rocket {
   getCommand() {
     let nextCommand = this.dna.genes[this.command];
     this.command++;
-    return nextCommand;
+    return nextCommand || Rocket.createCommand(0.0, 0.0, 1);
   }
 
 	static createCommand(thrust, steering, duration) {
